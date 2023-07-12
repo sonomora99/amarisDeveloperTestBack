@@ -1,8 +1,11 @@
 package com.amaris.amarisDeveloperTest.serviceImpl;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -10,52 +13,64 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.amaris.amarisDeveloperTest.ExternalService.ExternalService;
+import com.amaris.amarisDeveloperTest.dto.EmployeeDto;
+import com.amaris.amarisDeveloperTest.dto.EmployeeResponseDto;
+import com.amaris.amarisDeveloperTest.exception.StatusException;
+import com.amaris.amarisDeveloperTest.externalServiceImpl.ExternalServiceImpl;
 import com.amaris.amarisDeveloperTest.model.Employee;
-import com.amaris.amarisDeveloperTest.model.EmployeeResponse;
-import com.amaris.amarisDeveloperTest.model.EmployeesListResponse;
 import com.amaris.amarisDeveloperTest.service.EmployeeService;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService{
 
+	
 	@Autowired
-	private RestTemplate restTemplate;
-	
-	@Value("${amaris.api.url}")
-	private String amarisApiUrl;
-	
+	private ExternalServiceImpl externalServiceImpl;
 
+	@Autowired
+	private ModelMapper modelMapper;
+	
 	@Override
-	public List<Employee> getEmployeesList() {
-		List<Employee> employeesList;
+	public EmployeeResponseDto getEmployeesList(){
+		
+		EmployeeResponseDto result = new EmployeeResponseDto();
+		
 		try {
-			
-			EmployeesListResponse response = restTemplate.getForObject(amarisApiUrl+"/employees", EmployeesListResponse.class);
-			System.out.println("Response fro service :" + response.getData());
-			employeesList = response.getData();
-		} catch (Exception e) {
-			System.err.println("SERVICE ERROR: "+ e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"Exception calling enpoint service",e);
+			List<Employee> employeeList = externalServiceImpl.getEmployeeList();
+			List<EmployeeDto> employeeResult = employeeList.stream()
+					.map(entity -> modelMapper.map(entity, EmployeeDto.class))
+					.collect(Collectors.toList());
+			result.setStatus("200");
+			result.setData(employeeResult);
+			result.setMessage("Success!!");
+		} catch (StatusException e) {
+			result.setStatus(e.getStatus());
+			result.setMessage(e.getMessage());
 			
 		}
-		return employeesList;
+		return result;
 	}
 
 	@Override
-	public Employee getEmployeeById(String id) {
-		Employee employee;
+	public EmployeeResponseDto getEmployeeById(String id){
+		
+		EmployeeResponseDto result = new EmployeeResponseDto();
+		
 		try {
-			
-			EmployeeResponse response = restTemplate.getForObject(amarisApiUrl+"/employee/"+id, EmployeeResponse.class);
-			System.out.println("Response fro service :" + response.getData());
-			employee = response.getData();
-		} catch (Exception e) {
-			System.err.println("SERVICE ERROR: "+ e);
-			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"Exception calling enpoint service",e);
+			Employee employee = externalServiceImpl.getEmployeeById(id);
+			EmployeeDto employeeResult = modelMapper.map(employee, EmployeeDto.class);
+			List<EmployeeDto> employeeListResult = new ArrayList<EmployeeDto>();
+			employeeListResult.add(employeeResult);
+			result.setStatus("200");
+			result.setData(employeeListResult);
+			result.setMessage("Success!!");
+		} catch (StatusException e) {
+			result.setStatus(e.getStatus());
+			result.setMessage(e.getMessage());
 			
 		}
-		return employee;
-	}
+		return result;
 
-	
+	}
 }

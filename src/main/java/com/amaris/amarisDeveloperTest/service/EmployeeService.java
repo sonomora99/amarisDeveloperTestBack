@@ -1,15 +1,14 @@
 package com.amaris.amarisDeveloperTest.service;
 
-import java.math.BigDecimal;
-import java.util.List;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.amaris.amarisDeveloperTest.model.Employee;
+
+import com.amaris.amarisDeveloperTest.dto.EmployeeResponseDto;
+
 
 public interface EmployeeService  {
 
-	public List<Employee> getEmployeesList();
+	public EmployeeResponseDto getEmployeesList();
 	
-	public Employee getEmployeeById(String id);
+	public EmployeeResponseDto getEmployeeById(String id);
 }
